@@ -2,6 +2,8 @@ package com.openclassrooms.etudiant.service;
 
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.repository.UserRepository;
+import com.openclassrooms.etudiant.dto.UserResponseDTO;
+import com.openclassrooms.etudiant.mapper.UserDtoMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -20,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserDtoMapper userDtoMapper;
 
     public void register(User user) {
         Assert.notNull(user, "User must not be null");
@@ -46,5 +49,16 @@ public class UserService {
         }
     }
 
+    public List<UserResponseDTO> getAllUsers() {
+    return userRepository.findAll()
+            .stream()
+            .map(userDtoMapper::toResponseDTO)
+            .toList();
+    }
 
+    public UserResponseDTO getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return userDtoMapper.toResponseDTO(user);
+    }
 }
