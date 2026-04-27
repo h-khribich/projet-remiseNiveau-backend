@@ -1,7 +1,10 @@
 package com.openclassrooms.etudiant.service;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -24,5 +27,25 @@ public class JwtService {
               .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
               .signWith(SECRET_KEY)
               .compact();
+  }
+
+  public String extractUsername(String token) {
+      return extractAllClaims(token).getBody().getSubject();
+  }
+
+  public boolean isTokenValid(String token, UserDetails userDetails) {
+      String username = extractUsername(token);
+      return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+  }
+
+  private boolean isTokenExpired(String token) {
+      return extractAllClaims(token).getBody().getExpiration().before(new Date());
+  }
+
+  private Jws<Claims> extractAllClaims(String token) throws JwtException {
+      return Jwts.parserBuilder()
+              .setSigningKey(SECRET_KEY)
+              .build()
+              .parseClaimsJws(token);
   }
 }
