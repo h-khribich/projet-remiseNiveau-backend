@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,8 @@ public class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtService jwtService;
     @InjectMocks
     private UserService userService;
 
@@ -74,5 +77,41 @@ public class UserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue()).isEqualTo(user);
+    }
+
+    @Test
+    public void test_login_returns_jwt_token() {
+        // GIVEN
+        User user = new User();
+        user.setLogin(LOGIN);
+        user.setPassword("encoded-password");
+
+        //WHEN
+        when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, "encoded-password")).thenReturn(true);
+        when(jwtService.generateToken(any())).thenReturn("jwt-token");
+
+        String token = userService.login(LOGIN, PASSWORD);
+
+        // THEN
+        assertThat(token).isEqualTo("jwt-token");
+        verify(userRepository).findByLogin(LOGIN);
+        verify(passwordEncoder).matches(eq(PASSWORD), eq("encoded-password"));
+    }
+
+    @Test
+    public void test_login_invalid_credentials_throws_exception() {
+        // GIVEN
+        User user = new User();
+        user.setLogin(LOGIN);
+        user.setPassword("encoded-password");
+
+        // WHEN
+        when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, "encoded-password")).thenReturn(false);
+
+        // THEN
+        Assertions.assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
+                () -> userService.login(LOGIN, PASSWORD));
     }
 }

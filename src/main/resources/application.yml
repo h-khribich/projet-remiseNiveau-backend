@@ -11,6 +11,9 @@ spring:
     password: ${DB_PASSWORD}
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
 
+jwt:
+  secret: ${JWT_SECRET:ZXR1ZGlhbnQtYmFja2VuZC1kZWZhdWx0LXNlY3JldC1mb3ItaHMyNTYtMzItYnl0ZXM=}
+
 logging:
   level:
     org:
